@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment
+.env
+.env.*
+
+!.env.example
+
+# Prisma
+prisma/dev.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/settings.json
+
+# npm
+.npm-cache/
+
+# Docker volumes
+pgdata/
+
+# Coverage
+coverage/
+
+# Prisma generated client
+src/generated/

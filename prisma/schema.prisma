@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" 
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  RECEPTIONIST
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  patients Patient[]
+
+  @@index([name])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  clinicId     String
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(RECEPTIONIST)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  visits       Visit[]       @relation("UserVisits")
+  appointments Appointment[] @relation("UserAppointments")
+  chatSessions ChatSession[] @relation("UserChatSessions")
+  patients     Patient[]     @relation("UserPatients")
+
+  @@index([clinicId])
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  clinicId  String
+  doctorId  String?
+  firstName String
+  lastName  String
+  birthDate DateTime
+  gender    Gender
+  phone     String
+  email     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  doctor       User?         @relation("UserPatients", fields: [doctorId], references: [id])
+  visits       Visit[]       @relation("PatientVisits")
+  appointments Appointment[]
+
+  @@index([clinicId])
+  @@index([doctorId])
+}
+
+model Visit {
+  id             String    @id @default(uuid())
+  patientId      String
+  doctorId       String
+  visitDate      DateTime
+  chiefComplaint String
+  diagnosis      String?
+  treatment      String?
+  bloodPressure  String?
+  heartRate      String?
+  temperature    String?
+  doctorNotes    String?
+  followUpDate   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  patient Patient @relation("PatientVisits", fields: [patientId], references: [id])
+  doctor  User    @relation("UserVisits", fields: [doctorId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  patientId       String
+  doctorId        String
+  appointmentDate DateTime
+  status          AppointmentStatus @default(SCHEDULED)
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  User    @relation("UserAppointments", fields: [doctorId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+model ChatSession {
+  id        String   @id @default(uuid())
+  doctorId  String
+  createdAt DateTime @default(now())
+
+  doctor   User          @relation("UserChatSessions", fields: [doctorId], references: [id])
+  messages ChatMessage[]
+
+  @@index([doctorId])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String
+  role      ChatRole
+  content   String
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+}
