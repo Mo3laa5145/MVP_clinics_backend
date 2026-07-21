@@ -3,12 +3,12 @@ services:
     build: .
     container_name: clinica-backend
     ports:
-      - '3001:3001'
+      - "3001:3001"
     environment:
       PORT: 3001
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/clinica
       JWT_SECRET: change-me-in-production
-      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-}
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook/ai-chat
     depends_on:
       postgres:
         condition: service_healthy
@@ -22,14 +22,29 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: clinica
     ports:
-      - '5432:5432'
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d clinica']
+      test: ["CMD-SHELL", "pg_isready -U postgres -d clinica"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: clinica-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+
 volumes:
   pgdata:
+  n8n_data:
